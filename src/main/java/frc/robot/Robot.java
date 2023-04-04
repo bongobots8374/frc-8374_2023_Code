@@ -2,6 +2,13 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+/**
+I apolize to anyone who is reading this code (I probably forced you to so you can learn WPILib). This is a warning, some of this code is absolutley horrible.
+You'll porbably see badly made solutions and lots of errors in teh comments. Please excuse my spelling errors found in the comments, and horrific solutions.
+This season I got help from FRC Team 3655, the Tractor Technicians, with auto-balance code. All of the code relating to auto-balance is a modified version of
+theirs. Their team also helped me personally learn Java and WPILib.
+ */
+
 // Useless Imports
 package frc.robot;
 
@@ -13,7 +20,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableInstance; // Was meant to be used for Limelight
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.I2C;
@@ -21,12 +28,12 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.I2C.Port;
+import edu.wpi.first.wpilibj.I2C.Port; // Literally used
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand; // Huh?
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -547,20 +554,33 @@ Timer autoTimer4 = new Timer();
     m_rearLeft.setInverted(true);
     m_frontLeft.setInverted(true);
 
+  // Makes sure right motors are not inverted
     m_rearRight.setInverted(false);
     m_frontRight.setInverted(false);
 
-
+  // Enables compressor
     m_Compressor.enableDigital();
+
+  // Closes grabber
     m_solenoidDetract.set(true);
     m_solenoidExtend.set(false);
+
+  // Turns off both lights
     m_blueLights.set(false);
     m_yellowLights.set(false);
+
+  // Sets default speed-mode
     kspeedMode = "Medium";
     kspeedMultiply = -0.6;
+
+  // Sets display booleans for lights to false
     kyellowOn = false;
     kblueOn = false;
+
+  // Sets the arm movement mode to manual
     mode = true;
+
+  // Makes sure the robot doesn't think it's moving it's arm
     goingLevel1 = false; 
     goingLevel2 = false;
     goingLevel3 = false;
@@ -569,100 +589,134 @@ Timer autoTimer4 = new Timer();
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+  // Magic
     pidValueUpdate();
+
+  // Defines three doubles for arm movement
     double setPoint, ProcessVariable;
     setPoint = 0;
     ProcessVariable = 0;
-    if (mode == true) {
-      setPoint = ((m_armController.getRawAxis(1)*maxRPM)*1.1);
-      m_pidController.setReference(setPoint, CANSparkMax.ControlType.kVelocity);
-      ProcessVariable = m_encoder.getVelocity();
-    } else if(m_armController.getRawButtonReleased(6)) {
-      setPoint = SmartDashboard.getNumber("Set Position", 15);
-      m_pidController.setReference(setPoint, CANSparkMax.ControlType.kSmartMotion);
 
+    if (mode == true) { // Manual arm movement
+    // Sets how much the arm should move
+      setPoint = ((m_armController.getRawAxis(1)*maxRPM)*1.1);
+
+    // Moves the arm occording to the set point in velocity mode
+      m_pidController.setReference(setPoint, CANSparkMax.ControlType.kVelocity);
+
+    // Sets the process variable to the motor's current velocity
+      ProcessVariable = m_encoder.getVelocity();
     }
 
-    if (m_armController.getRawButtonReleased(2)) {
+    if (m_armController.getRawButtonReleased(2)) { // Arm controller B button
+    // Estop (Switches arm movement modes)
       modeSwitch();
     }
 
-    if (m_controller.getRawButtonReleased(8)) {
+    if (m_controller.getRawButtonReleased(8)) { // Chasis controller Start button
+    // Arm position calibration function
       armPositions();
     }
 
-    if(m_armController.getRawButtonReleased(4)) {
+    if(m_armController.getRawButtonReleased(4)) { // Arm controller Y Button
+    // Displays the desired arm position
       SmartDashboard.putNumber("Set Position", level3);
+    // Arm movement mode switch function
       modeSwitch();
+    // Sets the desired arm position
       setPoint = SmartDashboard.getNumber("Set Position", level3);
+    // Moves arm to desired position
       m_pidController.setReference(setPoint, CANSparkMax.ControlType.kSmartMotion);
+    // Tells the robot where it's arm is going
       goingLevel3 = true;
     }
-    if (goingLevel3==true&&m_encoder.getPosition() <= (level3+1)){
+    if (goingLevel3==true&&m_encoder.getPosition() <= (level3+1)){ // If arm is going to position 3 and it reads one before...
+    // Arm movement mode switch function
       modeSwitch();
+    // Tells robot it's no longer going to level 3 (This works, trust me)
       goingLevel3 = false;
     }
 
-    if (m_armController.getRawButtonReleased(3)) {
+    if (m_armController.getRawButtonReleased(3)) { // Arm controller X button
+    // Displays desired arm position
       SmartDashboard.putNumber("Set Position", level2);
+    // Arm movement mode switch function
       modeSwitch();
+    // Sets the desired arm position
       setPoint = SmartDashboard.getNumber("Set Position", level2);
+    // Moves arm to desired position
       m_pidController.setReference(setPoint, CANSparkMax.ControlType.kSmartMotion);
+    // Tells the robot where it's arm is going
       goingLevel2 = true;
     }
-    if (goingLevel2==true&&m_encoder.getPosition() <= (level2+1)){
+    if (goingLevel2==true&&m_encoder.getPosition() <= (level2+1)){ // If arm is going to position 2 and it reads one before...
+    // Arm movement mode switch function
       modeSwitch();
+    // Tells the robot it's no longer going
       goingLevel2 = false;
     }
 
-    if (m_armController.getRawButtonReleased(5)){
+    if (m_armController.getRawButtonReleased(5)){ // Arm controller LB button
+    // Displays desired arm position
       SmartDashboard.putNumber("Set Position", level1);
+    // Arm movement mode switch function
       modeSwitch();
+    // Sets the desired arm position
       setPoint = SmartDashboard.getNumber("Set Position", level1);
+    // MOves arm to desired position
       m_pidController.setReference(setPoint, CANSparkMax.ControlType.kSmartMotion);
+    // Tells teh robot where it's arm is going
       goingLevel1 = true;
     }
-    if (goingLevel1==true&&m_encoder.getPosition() <= (level1+1)){
+    if (goingLevel1==true&&m_encoder.getPosition() <= (level1+1)){ // If arm is going to position 2 and it reads one before...
+    // Arm movement mode switch function
       modeSwitch();
+    // Tells the robot it's no longer going
       goingLevel1 = false;
     }
 
-    // Defines two vaibles used for robot movement
+  // Defines two vaibles used for robot movement
   double rightSpeed = kspeedMultiply*m_controller.getRawAxis(1);
   double leftSpeed = kspeedMultiply*m_controller.getRawAxis(5);
 
+  // Drives robot based off controller inputs
     m_drive.tankDrive(leftSpeed, rightSpeed);
 
+  // Sets how much the arm should extend
     double setPoint2 = ((m_armController.getRawAxis(0)*maxRPM));
+  // Extends the arm according to the set point
     m_pidController2.setReference(setPoint2, CANSparkMax.ControlType.kVelocity);
 
-    if (m_armController.getRawButtonReleased(1)) {
+    if (m_armController.getRawButtonReleased(1)) { // Arm controller A button
+    // Toggles grabber
       m_solenoidDetract.toggle();
       m_solenoidExtend.toggle();
     }
 
-    if (m_controller.getRawButtonReleased(3)) {
+    if (m_controller.getRawButtonReleased(3)) { // Chasis controller X button
+    // Toggle blue light
       m_blueLights.toggle();
     }
 
-    if (m_controller.getRawButtonReleased(4)) {
+    if (m_controller.getRawButtonReleased(4)) { // Chasis controller Y button
+    // Toggle yellow light
       m_yellowLights.toggle();
     }
 
-    if (m_yellowLights.get()) {
+    if (m_yellowLights.get()) { // Updates yellow light boolean on Smart-Dashboard
       kyellowOn = true;
     } else {
       kyellowOn = false;
     }
 
-    if (m_blueLights.get()) {
+    if (m_blueLights.get()) { // Updates blue light boolean on Smart-Dashboard
       kblueOn = true;
     } else {
       kblueOn = false;
     }
 
-    if (m_controller.getRawButtonReleased(6)) {
-      switch(kspeedMode) {
+    if (m_controller.getRawButtonReleased(6)) { // Chasis controller RB Button
+      switch(kspeedMode) { // Sets speed-mode for robot
         case "Medium":
           kspeedMode = "Fast";
           kspeedMultiply = -0.9;
@@ -677,8 +731,8 @@ Timer autoTimer4 = new Timer();
       }
     }
 
-    if (m_controller.getRawButtonReleased(5)) {
-      switch(kspeedMode) {
+    if (m_controller.getRawButtonReleased(5)) { // Chasis controller LB button
+      switch(kspeedMode) { // See above
         case "Medium":
           kspeedMode = "Fast";
           kspeedMultiply = -0.9;
@@ -693,18 +747,19 @@ Timer autoTimer4 = new Timer();
       }
     }
 
-    if (m_armController.getRawButtonPressed(3)); {
+    if (m_armController.getRawButtonPressed(3)); { // Arm controller X(?) button
       //m_pidController.setReference(-10, CANSparkMax.ControlType.kPosition);
+    } // Ghost if statement
+
+    if (m_controller.getRawAxis(3) > 0) { // Chasis controller RT axis
+      m_drive.tankDrive(-kspeedMultiply*m_controller.getRawAxis(3), -kspeedMultiply*m_controller.getRawAxis(3)); // Moves robot straight forward
     }
 
-    if (m_controller.getRawAxis(3) > 0) {
-      m_drive.tankDrive(-kspeedMultiply*m_controller.getRawAxis(3), -kspeedMultiply*m_controller.getRawAxis(3));
+    if (m_controller.getRawAxis(2) > 0) { // Chasis controller LT axis
+      m_drive.tankDrive(kspeedMultiply*m_controller.getRawAxis(2), kspeedMultiply*m_controller.getRawAxis(2)); // Moves robot straight backward
     }
-
-    if (m_controller.getRawAxis(2) > 0) {
-      m_drive.tankDrive(kspeedMultiply*m_controller.getRawAxis(2), kspeedMultiply*m_controller.getRawAxis(2));
-    }
-    
+  
+  // Displays the very useful variable on Smart-Dashboard
     SmartDashboard.putNumber("SetPoint", setPoint);
     SmartDashboard.putNumber("ProcessVariable", ProcessVariable);
     SmartDashboard.putNumber("Output", m_armAngle.getAppliedOutput());
@@ -724,7 +779,9 @@ Timer autoTimer4 = new Timer();
   /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {
+  // Turns off the compressor
     m_Compressor.disable();
+  // Sets FF PID value to be safe for manual movement
     kFF = 0.000015;
     m_pidController.setFF(0.000015);
   }
@@ -732,12 +789,14 @@ Timer autoTimer4 = new Timer();
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {
+  // Displays FF PID value
     SmartDashboard.putNumber("Feed Forward", kFF);
   }
 
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
+  // Useless code, not sure why it's here
     m_Compressor.enableDigital();
     m_solenoidDetract.set(true);
     m_solenoidExtend.set(false);
@@ -746,6 +805,7 @@ Timer autoTimer4 = new Timer();
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
+  // Displays the gyro roll value while in test mode because why not
     SmartDashboard.putNumber("Gyro Y Axis", m_imu.getRoll());
   }
 
@@ -757,6 +817,7 @@ Timer autoTimer4 = new Timer();
   @Override
   public void simulationPeriodic() {}
 
+// Smart Mason code start
   static public final double map(double value, 
   double istart, 
   double istop, 
@@ -787,6 +848,7 @@ Timer autoTimer4 = new Timer();
     if (input > 180) return input - 360;
     return input;
   }
+// Smart Mason code end
 
   public void pidValueUpdate(){
     double p = SmartDashboard.getNumber("P Gain", 0);
@@ -814,22 +876,26 @@ Timer autoTimer4 = new Timer();
     if((minV != minVel)) { m_pidController.setSmartMotionMinOutputVelocity(minV,0); minVel = minV; }
     if((maxA != maxAcc)) { m_pidController.setSmartMotionMaxAccel(maxA,0); maxAcc = maxA; }
     if((allE != allowedErr)) { m_pidController.setSmartMotionAllowedClosedLoopError(allE,0); allowedErr = allE; }
-  }
+  } // Updates PID values using magic from the Spark Max example code
 
   public void modeSwitch(){
+  // Sets FF PID value according to the current mode
     if(mode == true){
       kFF = 0.000156;
     } else {
       kFF = 0.000015;
     }
+  // Pushes the PID value
     m_pidController.setFF(kFF);
+  // Displays the PID value
     SmartDashboard.putNumber("Feed Forward", kFF);
+  // Inverts mode
     mode = !mode;
-  }
+  } // Function to switch arm controller mode
 
   public void armPositions(){
     level1 = m_encoder.getPosition();
     level2 = level1 - 140;
     level3 = level1 - 185;
-  }
+  } // Calibrates the automatic arm positions
 }
