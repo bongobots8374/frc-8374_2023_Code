@@ -543,7 +543,7 @@ Timer autoTimer4 = new Timer();
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-    // Inverts the left side motors
+  // Inverts the left side motors
     m_rearLeft.setInverted(true);
     m_frontLeft.setInverted(true);
 
