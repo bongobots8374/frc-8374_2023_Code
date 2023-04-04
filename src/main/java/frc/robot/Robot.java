@@ -147,6 +147,7 @@ public class Robot extends TimedRobot {
     mode = false;
 
     /**
+    Default PID values
     kP = 6e-5; 
     kI = 0;
     kD = 0;
@@ -216,8 +217,7 @@ public class Robot extends TimedRobot {
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic() {
-  }
+  public void robotPeriodic() {}
 
   /**
    * This autonomous (along with the chooser code above) shows how to select between different
@@ -230,38 +230,54 @@ public class Robot extends TimedRobot {
    * chooser code above as well.
    */
 
+  // Sets variables used in auto
 int step = 0;
 double autoStartTime = 0;
 
+  // Defines the timers used in auto
 Timer autoTimer = new Timer();
 Timer autoTimer1 = new Timer();
 Timer autoTimer2 = new Timer();
 Timer autoTimer3 = new Timer();
 Timer autoTimer4 = new Timer();
+  // Magic
   double targetArmPos = 0;
 
   @Override
   public void autonomousInit() {
+  // Magic
     m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
+  
+  // Enables the compressor
     m_Compressor.enableDigital();
+
+  // Closes the grabber
     m_solenoidDetract.set(true);
     m_solenoidExtend.set(false);
+
+  // Sets step to 0
     step = 0;
+
+  // Magic
     targetArmPos = 0;
+
+  // Resets the timers
     autoTimer.reset();
     autoTimer1.reset();
     autoTimer2.reset();
     autoTimer3.reset();
     autoTimer4.reset();
     autoTimer.restart();
+
+  // Sets the FF PID value
     m_pidController.setFF(0.000156);
 
-
+  // Inverts left motors
     m_rearLeft.setInverted(true);
     m_frontLeft.setInverted(true);
 
+  // Makes sure the right motors don't invert
     m_rearRight.setInverted(false);
     m_frontRight.setInverted(false);
   }
@@ -269,12 +285,17 @@ Timer autoTimer4 = new Timer();
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
+  // Displays useful values on the SmartDashboard
     SmartDashboard.putNumber("Gyro Y Axis", m_imu.getRoll());
     SmartDashboard.putNumber("Position", m_encoder.getPosition());
     SmartDashboard.putNumber("step: ", step);
     SmartDashboard.putNumber("Timer", autoTimer3.get());
+
+  // The big auto-switch statement
     switch (m_autoSelected) {
       case kCustomAuto:
+      // Score and Autobalance
+      // This auto shouldn't be run, there isn't enough time to both score and auto-balance. For this reason, I won't comment it. Most code is re-used elsewhere.
       if (step == 0){
         m_pidController.setReference(level2-10, CANSparkMax.ControlType.kSmartMotion);
         if(m_encoder.getPosition()<=level2-8){
@@ -328,113 +349,193 @@ Timer autoTimer4 = new Timer();
       
         break;
       case kDefaultAuto:
-      if (step == 0) {
+      // Short side auto (Leave community on the short side)
+      
+      if (step == 0) { // Step 1
+      // Drive forward at 50% speed
         m_drive.tankDrive(0.5, 0.5);
       }
 
+    // Wait for 5.5 seconds
       if (autoTimer.get() > 5.5) {
+      // Move step up one
         step++;
       }
+      // Break this case
         break;
       case klipAuto:
-      if (step == 0) {
+      // Lip Side Auto (Leave community on the lip side)
+      
+      if (step == 0) { // Step 1
+      // Drive forward at 60% speed
         m_drive.tankDrive(0.6, 0.6);
       }
 
+    // Wait for 3.75 seconds
       if (autoTimer.get() > 3.75) {
+      // Move step up one
         step++;
       }
+
+    // Break this case
       break;
       case kautoBalanceOnly:
-    if (step == 0){
+      // Autobalance (Only Autobalances)
+    
+    if (step == 0){ // Step 1
+    // Drive backwards at 70% speed
       m_drive.tankDrive(-0.7, -0.7);
+
+    // If angle becomes 15 or higher, or 5 seconds have elapsed...
       if (Math.abs(m_imu.getRoll() ) > 15 || autoTimer.get() > 5){
+      // Move step up one
         step++;
       }
     }
 
-    if (step == 1){
+    if (step == 1){ // Step 2
+    // Mason's Auto-Balance Function
       autoBalance();
     }
+    // Break this case
       break;
     case kscoreLipAuto:
-    if (step == 0){
+    // Score + Lip Side Auto (Scores cube in middle then leaves community on lip side)
+
+    if (step == 0){ // Step 1
+    // Sets desired position for arm to move to
       m_pidController.setReference(level2-10, CANSparkMax.ControlType.kSmartMotion);
+
+    // Once 2 before desired position...
       if(m_encoder.getPosition()<=level2-8){
+      // Start second timer
         autoTimer1.restart();
+
+      // Set step to 1
         step = 1;
       }
     }
 
-    if(step == 1){
+    if(step == 1){ // Step 2
+    // Move forward at 45% speed
       m_drive.tankDrive(0.45, 0.45);
+    // Wait for 1 second
       if(autoTimer1.get() > 1){
+      // Start third timer
         autoTimer2.restart();
+
+      // Set step to 2
         step = 2;
       }
     }
 
-    if(step == 2){
+    if(step == 2){ // Step 3
+    // Open claw
       m_solenoidExtend.toggle();
       m_solenoidDetract.toggle();
+
+    // Set step to 3
       step = 3;
     }
 
-    if(step == 3){
+    if(step == 3){ // Step 4
+    // Wait for 1 second
       if(autoTimer2.get()>1){
+      // Start fourth timer
         autoTimer3.restart();
+
+      // Set step to 4
         step = 4;
         }
     }
-    if(step == 4){
+
+    if(step == 4){ // Step 5
+    // Drive backwards at 60% speed
       m_drive.tankDrive(-0.6, -0.6);
 
+    // Wait 3 seconds
       if(autoTimer3.get()==3){
+      // Set step to 5
         step = 5;
       }
-    if(step==5){
+
+    if(step==5){ // Step 6
+    // Stop motors (Maybe)
       m_drive.tankDrive(0, 0);
     }
     }
+  // Break this case
     break;
     case kscoreShortAuto:
-    if (step == 0){
+    // Score + Short Side Auto (Score a cube at middle level and leave community on short side)
+    if (step == 0){ // Step 1
+    // Sets desired position for arm to move to
       m_pidController.setReference(level2-10, CANSparkMax.ControlType.kSmartMotion);
+
+    // Once 2 before desired position...
       if(m_encoder.getPosition()<=level2-5){
+      // Start second timer
         autoTimer1.restart();
+
+      // Set step to 1
         step = 1;
       }
     }
 
-    if(step == 1){
-      m_drive.tankDrive(0.45, 0.45);
+    if(step == 1){ // Step 2
+    // Move forward at 45% speed
+    m_drive.tankDrive(0.45, 0.45);
+    // Wait for 1 second
       if(autoTimer1.get() > 1){
+      // Start third timer
         autoTimer2.restart();
+
+      // Set step to 2
         step = 2;
       }
     }
 
-    if(step == 2){
-      m_solenoidExtend.toggle();
-      m_solenoidDetract.toggle();
-      step = 3;
-    }
+    if(step == 2){ // Step 3
+      // Open claw
+        m_solenoidExtend.toggle();
+        m_solenoidDetract.toggle();
+  
+      // Set step to 3
+        step = 3;
+      }
 
-    if(step == 3){
+    if(step == 3){ // Step 4
+     // Wait for 1 second
       if(autoTimer2.get()>1){
+      // Start fourth timer
         autoTimer3.restart();
+    
+      // Set step to 4
         step = 4;
-        }
-    }
-    if (step == 4) {
-      m_drive.tankDrive(-0.5, -0.5);
+      }
     }
 
-    if (autoTimer3.get() > 5) {
-      step = 5;
+    if(step == 4){ // Step 5
+    // Drive backwards at 60% speed
+      m_drive.tankDrive(-0.5, -0.5);
+
+    // Wait 3 seconds
+      if(autoTimer3.get()==3){
+      // Set step to 5
+        step = 5;
+      }
+
+    if(step==5){ // Step 6
+    // Stop motors (Maybe)
+      m_drive.tankDrive(0, 0);
     }
+    }
+  // Breaks this case
     break;
       default:
+      // The "I Don't Want the Switch Statement to Break" auto
+
+      // Breaks this case
         break;
     }
   }
