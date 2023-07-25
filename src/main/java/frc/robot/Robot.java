@@ -81,7 +81,7 @@ public class Robot extends TimedRobot {
 
  // Defines an encoder
  private final RelativeEncoder m_encoder = m_armAngle.getEncoder();
- private final RelativeEncoder m_Encoder2 = m_armExtend.getEncoder();
+ private final RelativeEncoder m_Encoder2 = m_armExtend.getEncoder(); 
 
  // Defines teh variables for the PID values for the first Spark Max
  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM, maxVel, minVel, maxAcc, allowedErr;
@@ -566,8 +566,8 @@ Timer autoTimer4 = new Timer();
     m_solenoidExtend.set(false);
 
   // Turns off both lights
-    m_blueLights.set(false);
-    m_yellowLights.set(false);
+    m_blueLights.set(true);
+    m_yellowLights.set(true);
 
   // Sets default speed-mode
     kspeedMode = "Medium";
@@ -608,7 +608,7 @@ Timer autoTimer4 = new Timer();
       ProcessVariable = m_encoder.getVelocity();
     }
 
-    if (m_armController.getRawButtonReleased(2)) { // Arm controller B button
+    if (m_armController.getRawButtonReleased(79)) { // Arm controller B button
     // Estop (Switches arm movement modes)
       modeSwitch();
     }
