@@ -236,7 +236,6 @@ public class Robot extends TimedRobot {
    * below with additional strings. If using the SendableChooser make sure to add them to the
    * chooser code above as well.
    */
-
   // Sets variables used in auto
 int step = 0;
 double autoStartTime = 0;
